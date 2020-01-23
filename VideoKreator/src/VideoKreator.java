@@ -46,7 +46,8 @@ public class VideoKreator {
 	private static String linkFixo;
 	private static String tituloPricipal;
 	private static Elements sessoes;
-	private static HashMap<Integer, String> lsImagensTempo;
+	private static HashMap<Integer, String> lsImagensTempo = new HashMap<Integer, String>();
+	
 	
 	//Solicitar pesquisa
 	//Pesquisar
@@ -109,8 +110,6 @@ public class VideoKreator {
 				putLegendaImagem(str, texto);
 			}
 		}
-		
-		
 	}
 
 	private static void putLegendaImagem(String link, String texto) {
@@ -119,7 +118,6 @@ public class VideoKreator {
 			image = ImageIO.read(new URL(link));
 			Graphics g = image.getGraphics();
 			putLegendaComBorda(g, texto, image);
-			
 
 			System.out.println(texto);
 		} catch (IOException e) {
@@ -156,14 +154,13 @@ public class VideoKreator {
 	}
 
 	private static String getNomeImagem(String texto) {
-		if(lsImagensTempo != null || lsImagensTempo.isEmpty()) {
+		//W:Todo
+		if(lsImagensTempo != null && lsImagensTempo.isEmpty()) {
 			lsImagensTempo.put(1, texto);
 		}else {
-			
+			lsImagensTempo.put(lsImagensTempo.size()+1, texto);
 		}
-			
-		
-		return lsImagensTempo.get(lsImagensTempo.size());
+		return String.valueOf(lsImagensTempo.size());
 	}
 
 	private static void legendaComBorda(Graphics g, String texto, BufferedImage image, int desconto, Integer tamanhoFonte, int linha) {
@@ -229,20 +226,15 @@ public class VideoKreator {
 	private static List<Map<String, List<String>>> extract(Document pagina) {
 		try {
 			Element body = pagina.select("#bodycontents").get(0);
-			
 			List<Map<String, List<String>>> ls = new ArrayList<Map<String,List<String>>>(); 
-			
 			Elements anchor = body.select("a[class=anchor]").parents();
-			
 			Map<String, List<String>> imagensTexto = new LinkedHashMap<String, List<String>>();
 			for (Element el : anchor) {
 				imagensTexto = new LinkedHashMap<String, List<String>>();
 				Elements ancoras = el.select("a[class=stepanchor]");
 				for (Element el2 : ancoras) {
 					List<String> lsImagem = new ArrayList<String>();
-
 					String texto = el2.nextElementSiblings().text();
-
 					String enderecoImagem = el2.parent().select("img").attr("src");
 					if (imagensTexto.get(enderecoImagem) == null) {
 						lsImagem.add(texto);
@@ -250,7 +242,6 @@ public class VideoKreator {
 					} else {
 						imagensTexto.get(enderecoImagem).add(texto);
 					}
-					
 				}
 				if(imagensTexto!= null && !imagensTexto.isEmpty())
 					ls.add(imagensTexto);
