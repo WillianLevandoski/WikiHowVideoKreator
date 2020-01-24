@@ -37,11 +37,10 @@ public class NLP {
 			SentenceDetectorME sdetector = new SentenceDetectorME(model);
 			String sentences[] = sdetector.sentDetect(texto);
 			for (String str : sentences) {
-				listaSetencas.add(str);
+				if(str!= null)
+					listaSetencas.add(str);
 			}
-
 			is.close();
-
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

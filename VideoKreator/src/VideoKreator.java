@@ -47,6 +47,8 @@ public class VideoKreator {
 	private static String tituloPricipal;
 	private static Elements sessoes;
 	private static HashMap<Integer, String> lsImagensTempo = new HashMap<Integer, String>();
+	private static Integer tamanhoFonte = 20;
+	static String path = "C:\\Users\\Hall\\Documents\\";
 	
 	
 	//Solicitar pesquisa
@@ -61,7 +63,6 @@ public class VideoKreator {
 	public static void main(String[] args) {
 		solicitarPesquisa();
 		
-		
 	}
 
 	private static void solicitarPesquisa() {
@@ -70,7 +71,7 @@ public class VideoKreator {
 		   System.out.println("Informe sua pesquisa:");
 		   String pesquisa = ler.next();
 			 ler = new Scanner(System.in); 
-		   Map<String, String> lsPesquisa = pesquisar(pesquisa);
+		   Map<String, String> lsPesquisa = pesquisarWikiHow(pesquisa);
 		   Map<Integer, String> mapTitulos = listarResultadoPesquisa(lsPesquisa);
 		   System.out.println("Para qual pesquisa deseja fazer o video:");
 		   System.out.println("0 - Todos os Títulos");
@@ -82,10 +83,30 @@ public class VideoKreator {
 			}else {
 				pesquisarIndiceEscolhido(lsPesquisa.get((mapTitulos.get(indiceEscolhido))));
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static Map<String, String> pesquisarWikiHow(String pesquisa) {
+		Response response;
+		try {
+			response = Jsoup.connect("https://pt.wikihow.com/wikiHowTo").method(Method.GET).data("search", pesquisa).execute();
+			return getTitulosLinks(response.parse());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private static Map<Integer, String> listarResultadoPesquisa(Map<String, String> mapPesquisa) {
+		int count = 1;
+		Map<Integer, String> mapTitulos = new HashMap<Integer, String>();
+		for(String titulo : mapPesquisa.keySet()) {
+			mapTitulos.put(count, titulo);
+			count++;
+		}
+		return mapTitulos;
 	}
 
 	private static void pesquisarIndiceEscolhido(String link) {
@@ -93,60 +114,60 @@ public class VideoKreator {
 		try {
 			Response response = Jsoup.connect(link).method(Method.GET).execute();
 			List<Map<String, List<String>>> lista = extract(response.parse());
+			String caminho = tituloPricipal.replace(" ", "");
+			path = path + caminho+"\\";
+			File file = new File(path);
+			if (!file.exists()){
+				file.mkdir();
+			}
+			file = new File( path );
+			
 			criarVideo(lista);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-
 	private static void criarVideo(List<Map<String, List<String>>> lista) {
-		//Imprime
-		for(Map<String, List<String>> map : lista) {
-			for(String str : map.keySet()) {
-			//	String link = linkFixo +"/" +str;
-				String texto = map.get(str).get(0); // Verificar se tem mais além do zero
-				putLegendaImagem(str, texto);
+		if (lista != null) {
+			for (Map<String, List<String>> map : lista) {
+				for (String str : map.keySet()) {
+					// String link = linkFixo +"/" +str;
+					String texto = map.get(str).get(0); // Verificar se tem mais além do zero
+					putLegendaImagem(str, texto);
+				}
 			}
+		} else {
+			System.out.println("----------------------------");
+			System.out.println("Possível problema com intenet");
 		}
 	}
 
 	private static void putLegendaImagem(String link, String texto) {
-		BufferedImage image = null;
-		try {
-			image = ImageIO.read(new URL(link));
-			Graphics g = image.getGraphics();
-			putLegendaComBorda(g, texto, image);
-
+			putLegendaComBorda(texto, link);
 			System.out.println(texto);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		// TODO Auto-generated catch block
 
 	}
 
-	private static Color getCorNegativa(BufferedImage image) {
-		int neg = (0xFFFFFF - image.getRGB( getMargemInicioLegenda(image.getWidth()), getAlturaLegenda(image.getHeight(), 1))) | 0xFF000000;
-		
-		Color mycolor = new Color(neg);
-		return mycolor;
+	private static Color getCorNegativa(BufferedImage imagem) {
+		// Pega a cor da área apróximada onde irá a legenda
+		int idCorNegativa = (0xFFFFFF - imagem.getRGB( getMargemInicioLegenda(imagem.getWidth()), getAlturaLegenda(imagem.getHeight()))) | 0xFF000000;
+		Color corNegativa = new Color(idCorNegativa);
+		return corNegativa;
 	}
 
-	private static void putLegendaComBorda(Graphics g, String texto, BufferedImage image) {
+	private static void putLegendaComBorda(String textoCompleto, String link) {
 		try {
-		List<String> ls = NLP.sentence(texto); 
-		int desconto = texto.length()*10;
-		Integer tamanhoFonte = 20;
+		List<String> ls = NLP.sentence(textoCompleto); // Separa o texto em frases
 		int linha = 0;
-		for(String str : ls) {
-			legendaComBorda(g, str, image, desconto, tamanhoFonte, linha);
-			g.dispose();
-			String nome = getNomeImagem(texto);
-			ImageIO.write(image, "png", new File(nome+".png"));
-			linha = linha+1;
+		for(String legenda : ls) {
+			BufferedImage image = ImageIO.read(new URL(link));
+			Graphics graphics = image.getGraphics();
+			legendaComBorda(graphics, legenda, image);
+			String nome = getNomeImagem(legenda);
+			ImageIO.write(image, "png", new File(path+String.valueOf(nome)+".png"));
+			linha = linha+1; // Qunts vzs a imagem irá repetir para caber todas as legendas
 		}
 		} catch (Exception e) {
 			System.out.println(e);		}
@@ -163,31 +184,35 @@ public class VideoKreator {
 		return String.valueOf(lsImagensTempo.size());
 	}
 
-	private static void legendaComBorda(Graphics g, String texto, BufferedImage image, int desconto, Integer tamanhoFonte, int linha) {
-				g.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
-				g.setColor(getCorNegativa(image));
-				g.drawString(texto, getMargemInicioLegenda(image.getWidth()-1, desconto), getAlturaLegenda(image.getHeight(), linha));
-				g.drawString(texto, getMargemInicioLegenda(image.getWidth()+1, desconto), getAlturaLegenda(image.getHeight(), linha));
-				g.drawString(texto, getMargemInicioLegenda(image.getWidth(), desconto), getAlturaLegenda(image.getHeight(), linha)-1);
-				g.drawString(texto, getMargemInicioLegenda(image.getWidth(), desconto), getAlturaLegenda(image.getHeight(), linha)+1);
-				g.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
-				g.setColor(Color.yellow);
-				g.drawString(texto, getMargemInicioLegenda(image.getWidth(), desconto), getAlturaLegenda(image.getHeight(), linha));
-				
+	private static void legendaComBorda(Graphics graphics, String texto, BufferedImage image) {
+				int descontoMargem = texto.length()*2;
+				putBordaLegenda(graphics, texto, image, descontoMargem);
+				graphics.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
+				graphics.setColor(Color.yellow);
+				graphics.drawString(texto, getMargemInicioLegenda(image.getWidth(), descontoMargem), getAlturaLegenda(image.getHeight()));
+				graphics.dispose();
+	}
+
+	private static void putBordaLegenda(Graphics graphics, String texto, BufferedImage image, int desconto) {
+		//Add um "sobre legenda" em um cor negativa a da área
+		graphics.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
+		graphics.setColor(getCorNegativa(image));
+		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth()-1, desconto), getAlturaLegenda(image.getHeight()));
+		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth()+1, desconto), getAlturaLegenda(image.getHeight()));
+		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth(), desconto), getAlturaLegenda(image.getHeight())-1);
+		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth(), desconto), getAlturaLegenda(image.getHeight())+1);
 	}
 	private static int getMargemInicioLegenda(int largura) {
 		return getMargemInicioLegenda(largura, 0);
 	}
-
 
 	private static int getMargemInicioLegenda(int largura, int desconto) {
 		largura = largura-desconto;
 		return largura*50/100;
 	}
 
-	private static int getAlturaLegenda(int altura, int linha) {
- 		int multiplicador = 5 * linha;
-		return altura * (80 + multiplicador) /100;
+	private static int getAlturaLegenda(int altura) {
+		return (altura * 80)  /100;
 	}
 
 	private static String getLinkReal(String link) {
@@ -224,6 +249,7 @@ public class VideoKreator {
 	}
 
 	private static List<Map<String, List<String>>> extract(Document pagina) {
+		//Extrai o conteudo que será usado
 		try {
 			Element body = pagina.select("#bodycontents").get(0);
 			List<Map<String, List<String>>> ls = new ArrayList<Map<String,List<String>>>(); 
@@ -277,29 +303,8 @@ public class VideoKreator {
 		return null;
 	}
 
-	private static Map<Integer, String> listarResultadoPesquisa(Map<String, String> mapPesquisa) {
-		int count = 1;
-		Map<Integer, String> mapTitulos = new HashMap<Integer, String>();
-		for(String titulo : mapPesquisa.keySet()) {
-			mapTitulos.put(count, titulo);
-			count++;
-		}
-		return mapTitulos;
-	}
 
-	private static Map<String, String> pesquisar(String pesquisa) {
-		Response response;
-		try {
-		 response = Jsoup.connect("https://pt.wikihow.com/wikiHowTo")
-					.method(Method.GET)
-					.data("search",pesquisa)
-					.execute();
-		 return getTitulosLinks(response.parse());
-		}catch (Exception e) {
-				e.printStackTrace();
-		}
-		return null;
-	}
+
 
 	private static Map<String, String> getTitulosLinks(Document doc ) {
 		Map<String, String> mapResultado = new HashMap<String, String>();
