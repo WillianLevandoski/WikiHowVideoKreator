@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -47,8 +48,9 @@ public class VideoKreator {
 	private static String tituloPricipal;
 	private static Elements sessoes;
 	private static HashMap<Integer, String> lsImagensTempo = new HashMap<Integer, String>();
-	private static Integer tamanhoFonte = 20;
+	private static Integer tamanhoFonte = 22;
 	static String path = "C:\\Users\\Hall\\Documents\\";
+	private static Font fontePrincipal = new Font("Helvetica", Font.BOLD, tamanhoFonte);
 	
 	
 	//Solicitar pesquisa
@@ -160,20 +162,68 @@ public class VideoKreator {
 	private static void putLegendaComBorda(String textoCompleto, String link) {
 		try {
 		List<String> ls = NLP.sentence(textoCompleto); // Separa o texto em frases
-		int linha = 0;
+		int imgCount = 0;
+		BufferedImage image = ImageIO.read(new URL(link));
+		
 		for(String legenda : ls) {
-			BufferedImage image = ImageIO.read(new URL(link));
-			Graphics graphics = image.getGraphics();
+			getListaLinha(image, legenda);
+			
+			
+			
+			System.out.println(imgCount+1);
+			Graphics graphics = image.getGraphics().create();
+			graphics.setFont(fontePrincipal);
+			
 			legendaComBorda(graphics, legenda, image);
 			String nome = getNomeImagem(legenda);
 			ImageIO.write(image, "png", new File(path+String.valueOf(nome)+".png"));
-			linha = linha+1; // Qunts vzs a imagem irá repetir para caber todas as legendas
+			imgCount = imgCount+1; // Qunts vzs a imagem irá repetir para caber todas as legendas
 		}
 		} catch (Exception e) {
 			System.out.println(e);		}
 		
 	}
 
+	private static List<String> getListaLinha(BufferedImage image, String legenda) {
+		try {
+			FontMetrics metricas = image.getGraphics().getFontMetrics(fontePrincipal);
+			int divisao = 2;
+			int largura = 0;
+			int divisor = 0;
+			int inicio = 0;
+			List<String> lsLeganda = new ArrayList<String>();
+			while (largura <= 30) {
+				divisor = (image.getWidth() - metricas.stringWidth(legenda)) / divisao;
+				largura = divisor;
+				if (largura < 30) {
+					for (int i = 0; i <=  10; i++) {
+						largura = largura + 1;
+						System.out.println(legenda.substring(largura-1, largura));
+						if (legenda.substring(largura-1, largura).equals(" ")) {
+							lsLeganda.add((String) legenda.subSequence(inicio, largura));
+							inicio = largura;
+							largura = largura + divisor;
+						} else {
+							i = i++;
+						}
+
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return null;
+	}
+
+	private static void legendaComBorda(Graphics graphics, String texto, BufferedImage image) {
+			    
+				//putBordaLegenda(graphics, texto, image, descontoMargem);
+				graphics.setColor(Color.yellow);
+			//	graphics.drawString(texto,x, getAlturaLegenda(image.getHeight()));
+				graphics.dispose();
+	}
+	
 	private static String getNomeImagem(String texto) {
 		//W:Todo
 		if(lsImagensTempo != null && lsImagensTempo.isEmpty()) {
@@ -184,18 +234,9 @@ public class VideoKreator {
 		return String.valueOf(lsImagensTempo.size());
 	}
 
-	private static void legendaComBorda(Graphics graphics, String texto, BufferedImage image) {
-				int descontoMargem = texto.length()*2;
-				putBordaLegenda(graphics, texto, image, descontoMargem);
-				graphics.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
-				graphics.setColor(Color.yellow);
-				graphics.drawString(texto, getMargemInicioLegenda(image.getWidth(), descontoMargem), getAlturaLegenda(image.getHeight()));
-				graphics.dispose();
-	}
-
 	private static void putBordaLegenda(Graphics graphics, String texto, BufferedImage image, int desconto) {
 		//Add um "sobre legenda" em um cor negativa a da área
-		graphics.setFont(new Font("Helvetica", Font.BOLD, tamanhoFonte));
+		graphics.setFont(fontePrincipal);
 		graphics.setColor(getCorNegativa(image));
 		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth()-1, desconto), getAlturaLegenda(image.getHeight()));
 		graphics.drawString(texto, getMargemInicioLegenda(image.getWidth()+1, desconto), getAlturaLegenda(image.getHeight()));
