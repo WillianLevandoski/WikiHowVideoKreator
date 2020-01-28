@@ -188,26 +188,17 @@ public class VideoKreator {
 		try {
 			FontMetrics metricas = image.getGraphics().getFontMetrics(fontePrincipal);
 			int divisao = 2;
-			int largura = 0;
-			int divisor = 0;
-			int inicio = 0;
-			List<String> lsLeganda = new ArrayList<String>();
-			while (largura <= 30) {
-				divisor = (image.getWidth() - metricas.stringWidth(legenda)) / divisao;
-				largura = divisor;
-				if (largura < 30) {
-					for (int i = 0; i <=  10; i++) {
-						largura = largura + 1;
-						System.out.println(legenda.substring(largura-1, largura));
-						if (legenda.substring(largura-1, largura).equals(" ")) {
-							lsLeganda.add((String) legenda.subSequence(inicio, largura));
-							inicio = largura;
-							largura = largura + divisor;
-						} else {
-							i = i++;
-						}
-
-					}
+			int divisor = (image.getWidth() - metricas.stringWidth(legenda)) / divisao;
+			int largura  = legenda.length();
+			int soma = 0;
+			if(divisor < 30) { //30 = tamanho minimo borda legenda
+				String texto = "";
+				List<String> lsLegenda = NLP.token(legenda);
+				for(String str : lsLegenda) {
+					if(soma> largura/divisao) 
+						break;
+					soma = soma + str.length();
+					texto = texto + str;
 				}
 			}
 		} catch (Exception e) {
