@@ -168,6 +168,10 @@ public class VideoKreator {
 		
 		for(String legenda : ls) {
 			List<String> lsRetorno  = getListaLinha(image, legenda);
+			
+			for(String str : lsRetorno) {
+				
+			}
 				Graphics graphics = image.getGraphics().create();
 				graphics.setFont(fontePrincipal);
 			
