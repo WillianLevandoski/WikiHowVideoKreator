@@ -163,7 +163,7 @@ public class VideoKreator {
 	private static void putLegendaComBorda(String textoCompleto, String link) {
 		try {
 		List<String> ls = NLP.sentence(textoCompleto); // Separa o texto em frases
-		int imgCount = 0;
+		int linha = 0;
 		BufferedImage image = ImageIO.read(new URL(link));
 		
 		for(String legenda : ls) {
@@ -171,18 +171,23 @@ public class VideoKreator {
 			
 			for(String str : lsRetorno) {
 				
-				Graphics graphics = image.getGraphics().create();
-				graphics.setFont(fontePrincipal);
-			
-			legendaComBorda(graphics, legenda, image);
-			String nome = getNomeImagem(legenda);
-			ImageIO.write(image, "png", new File(path+String.valueOf(nome)+".png"));
-			imgCount = imgCount+1; // Qunts vzs a imagem irá repetir para caber todas as legendas
+				linha = putLegenda(linha, image, str);
 			}
 		}
 		} catch (Exception e) {
 			System.out.println(e);		}
 		
+	}
+
+	private static int putLegenda(int imgCount, BufferedImage image, String legenda) throws IOException {
+		Graphics graphics = image.getGraphics().create();
+		graphics.setFont(fontePrincipal);
+
+		legendaComBorda(graphics, legenda, image);
+		String nome = getNomeImagem(legenda);
+		ImageIO.write(image, "png", new File(path + String.valueOf(nome) + ".png"));
+		imgCount = imgCount + 1; // Qunts vzs a imagem irá repetir para caber todas as legendas
+		return imgCount;
 	}
 
 	private static List<String> getListaLinha(BufferedImage image, String legenda) {
