@@ -171,7 +171,6 @@ public class VideoKreator {
 			
 			for(String str : lsRetorno) {
 				
-			}
 				Graphics graphics = image.getGraphics().create();
 				graphics.setFont(fontePrincipal);
 			
@@ -179,6 +178,7 @@ public class VideoKreator {
 			String nome = getNomeImagem(legenda);
 			ImageIO.write(image, "png", new File(path+String.valueOf(nome)+".png"));
 			imgCount = imgCount+1; // Qunts vzs a imagem irá repetir para caber todas as legendas
+			}
 		}
 		} catch (Exception e) {
 			System.out.println(e);		}
