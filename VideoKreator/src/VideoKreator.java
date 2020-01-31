@@ -1,4 +1,5 @@
 import java.awt.Color;
+//Willian Levandoski <willian.levandoski@yahoo.com.br>
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -166,13 +167,9 @@ public class VideoKreator {
 		BufferedImage image = ImageIO.read(new URL(link));
 		
 		for(String legenda : ls) {
-			getListaLinha(image, legenda);
-			
-			
-			
-			System.out.println(imgCount+1);
-			Graphics graphics = image.getGraphics().create();
-			graphics.setFont(fontePrincipal);
+			List<String> lsRetorno  = getListaLinha(image, legenda);
+				Graphics graphics = image.getGraphics().create();
+				graphics.setFont(fontePrincipal);
 			
 			legendaComBorda(graphics, legenda, image);
 			String nome = getNomeImagem(legenda);
@@ -185,26 +182,34 @@ public class VideoKreator {
 	}
 
 	private static List<String> getListaLinha(BufferedImage image, String legenda) {
+		List<String> lsRetorno = new ArrayList<String>();
 		try {
 			FontMetrics metricas = image.getGraphics().getFontMetrics(fontePrincipal);
-			int divisao = 2;
-			int divisor = (image.getWidth() - metricas.stringWidth(legenda)) / divisao;
-			int largura  = legenda.length();
+			double a = (image.getWidth() /  (metricas.stringWidth(legenda) * .7)+1);
 			int soma = 0;
-			if(divisor < 30) { //30 = tamanho minimo borda legenda
-				String texto = "";
+				double larguraIdeal  = legenda.length() / a;
 				List<String> lsLegenda = NLP.token(legenda);
+				String texto = "";
 				for(String str : lsLegenda) {
-					if(soma> largura/divisao) 
-						break;
+					if(soma> larguraIdeal) {
+						lsRetorno.add(texto);
+						System.out.println(texto);
+						texto = "";
+						soma = 0;
+					}
 					soma = soma + str.length();
-					texto = texto + str;
+					String espaco = " ";
+					if(str.equals(",") || str.equals("."))
+						espaco = "";
+					texto = texto +espaco + str;
 				}
-			}
+				if(!lsRetorno.contains(texto))
+					lsRetorno.add(texto);
+				System.out.println(lsRetorno);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		return null;
+		return lsRetorno;
 	}
 
 	private static void legendaComBorda(Graphics graphics, String texto, BufferedImage image) {
